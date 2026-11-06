@@ -575,6 +575,93 @@ core_combine_over_u_sse2_mask (uint32_t *	  pd,
 	w--;
     }
 
+    while (w >= 8)
+    {
+	__m128i mask0 = load_128_unaligned ((__m128i *)pm);
+	__m128i mask1 = load_128_unaligned ((__m128i *)(pm + 4));
+
+	if (!is_zero (mask0))
+	{
+	    __m128i src0 = load_128_unaligned ((__m128i *)ps);
+
+	    if (is_opaque (_mm_and_si128 (src0, mask0)))
+	    {
+		save_128_aligned ((__m128i *)pd, src0);
+	    }
+	    else
+	    {
+		__m128i dst0 = load_128_aligned ((__m128i *)pd);
+		__m128i dst0_hi, dst0_lo;
+		__m128i src0_hi, src0_lo;
+		__m128i mask0_hi, mask0_lo;
+		__m128i alpha0_hi, alpha0_lo;
+
+		unpack_128_2x128 (mask0, &mask0_lo, &mask0_hi);
+		unpack_128_2x128 (src0, &src0_lo, &src0_hi);
+
+		expand_alpha_2x128 (mask0_lo, mask0_hi, &mask0_lo, &mask0_hi);
+		pix_multiply_2x128 (&src0_lo, &src0_hi,
+				    &mask0_lo, &mask0_hi,
+				    &src0_lo, &src0_hi);
+
+		unpack_128_2x128 (dst0, &dst0_lo, &dst0_hi);
+
+		expand_alpha_2x128 (src0_lo, src0_hi,
+				    &alpha0_lo, &alpha0_hi);
+
+		over_2x128 (&src0_lo, &src0_hi, &alpha0_lo, &alpha0_hi,
+			    &dst0_lo, &dst0_hi);
+
+		save_128_aligned (
+		    (__m128i *)pd,
+		    pack_2x128_128 (dst0_lo, dst0_hi));
+	    }
+	}
+
+	if (!is_zero (mask1))
+	{
+	    __m128i src1 = load_128_unaligned ((__m128i *)(ps + 4));
+
+	    if (is_opaque (_mm_and_si128 (src1, mask1)))
+	    {
+		save_128_aligned ((__m128i *)(pd + 4), src1);
+	    }
+	    else
+	    {
+		__m128i dst1 = load_128_aligned ((__m128i *)(pd + 4));
+		__m128i dst1_hi, dst1_lo;
+		__m128i src1_hi, src1_lo;
+		__m128i mask1_hi, mask1_lo;
+		__m128i alpha1_hi, alpha1_lo;
+
+		unpack_128_2x128 (mask1, &mask1_lo, &mask1_hi);
+		unpack_128_2x128 (src1, &src1_lo, &src1_hi);
+
+		expand_alpha_2x128 (mask1_lo, mask1_hi, &mask1_lo, &mask1_hi);
+		pix_multiply_2x128 (&src1_lo, &src1_hi,
+				    &mask1_lo, &mask1_hi,
+				    &src1_lo, &src1_hi);
+
+		unpack_128_2x128 (dst1, &dst1_lo, &dst1_hi);
+
+		expand_alpha_2x128 (src1_lo, src1_hi,
+				    &alpha1_lo, &alpha1_hi);
+
+		over_2x128 (&src1_lo, &src1_hi, &alpha1_lo, &alpha1_hi,
+			    &dst1_lo, &dst1_hi);
+
+		save_128_aligned (
+		    (__m128i *)(pd + 4),
+		    pack_2x128_128 (dst1_lo, dst1_hi));
+	    }
+	}
+
+	pm += 8;
+	ps += 8;
+	pd += 8;
+	w -= 8;
+    }
+
     while (w >= 4)
     {
 	__m128i mask = load_128_unaligned ((__m128i *)pm);
