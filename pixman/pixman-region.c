@@ -252,8 +252,8 @@ alloc_data (size_t n)
 #define NEWRECT(region, next_rect, nx1, ny1, nx2, ny2)			\
     do									\
     {									\
-	if (!(region)->data ||						\
-	    ((region)->data->numRects == (region)->data->size))		\
+	if (__builtin_expect (!(region)->data ||			\
+	    ((region)->data->numRects == (region)->data->size), 0))	\
 	{								\
 	    if (!pixman_rect_alloc (region, 1))				\
 		return FALSE;						\
