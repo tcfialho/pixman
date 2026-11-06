@@ -2544,10 +2544,10 @@ sse2_composite_over_n_8888 (pixman_implementation_t *imp,
     if (src == 0)
 	return;
 
-    if ((src >> 24) == 0xff)
-    {
+    if ((src >> 24) == 0xff &&
 	pixman_fill (dest_image->bits.bits, dest_image->bits.rowstride, 32,
-		     dest_x, dest_y, width, height, src);
+		     dest_x, dest_y, width, height, src))
+    {
 	return;
     }
 
